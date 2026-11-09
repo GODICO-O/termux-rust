@@ -1,0 +1,44 @@
+name: Build Termux APKs
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch: # Memungkinkan kamu menjalankan build secara manual dari web GitHub
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive' # Menjaga agar pustaka/submodul bawaan Termux ikut terunduh
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle' # Mengaktifkan tembolok (cache) agar proses build berikutnya lebih cepat
+
+      - name: Grant Execute Permission for Gradle Wrapper
+        run: chmod +x gradlew
+
+      - name: Build Debug APK with Gradle
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: termux-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 7 # Berkas APK akan disimpan selama 7 hari sebelum dihapus otomatis oleh GitHub
+          
